@@ -1,0 +1,63 @@
+Oppgave 1 Programmer i databasen.
+A. Trigger
+Kundenes dataforbruk måles fortløpende (i bytes) av driftssystemet for operatørens mobilnett. Hver time sender driftssystemet samlet databruk siste time, for hvert telefonnummer, til mobilselskapets database. Programmet som gjør overføringen, setter disse dataene inn i databasen som nye rader i tabellen databruk. Som følge av hver slik ny rad skal en trigger i databasen automatisk gjøre følgende endringer:
+
+Hvis gjenstående datamengde (DataGjenstårByte) på abonnementet har verdien NULL, betyr det at abonnementet har ubegrenset databruk. Da skal det ikke gjøres noe.
+Hvis gjenstående datamengde (DataGjenstårByte) på abonnementet er større enn 0, skal datamengden reduseres med databruket fra den nye raden i tabellen databruk. Men: Gjenstående datamengde skal aldri settes til lavere verdi enn 0.
+Hvis abonnementet ikke har mer gjenstående datamengde etter at databruken er registrert, skal abonnenten få redusert hastighet på datatrafikk inntil datamengden er fyllt opp igjen. Dette gjøres ved å sette kolonnen RedusertHastighet til true.
+Skriv en trigger som gjør disse endringene i databasen automatisk hver gang det legges inn en ny rad i tabellen databruk. Du kan forutsette at rader i denne tabellen ikke kan endres eller slettes etter at de er registrert.
+
+B. Testprogram for trigger
+Skriv en lagret prosedyre som kan generere fiktive testdata i tabellen databruk: Prosedyren skal kunne kalles med et telefonnummer og en dato som IN-parametere. Den skal da generere (INSERTe) testdata for det aktuelle abonnementet på alle timer denne datoen. Dataforbruket (i Bytes) for hver time kan settes til et tilfeldig tall mellom 0 og 20 MB. Tips: Bruk RAND() funksjonen i MySQL. Du behøver ikke ta hensyn til at det reelle forbruket varierer mellom dag og natt. Prosedyren bør ha transaksjonshåndtering slik at den vil fungere korrekt i en flerbrukerdatabase.
+
+Kjør prosedyren med et par telefonnummer og noen datoer. Sjekk at data opprettes som ønsket, og at triggeren i a) gir korrekt effekt.
+
+C. Lagret funksjon
+Hver måned får alle telefonabonnementer "påfyll" av ny datamengde (månedskvote). Kolonnen abonnementtype.InkludertDataGB inneholder månedskvoten for abonnementet. (Verdien NULL betyr at abonnementstypen har ubegrenset datamengde uten noen månedskvote.)
+
+Rollover
+Ved påfyll av ny månedskvote, skal gjenstående (ubrukt) datamengde (DataGjenstårByte) på abonnementet beholdes og legges til den nye månedskvoten fra abonnementstypen. Dette kalles "rollover". Kolonnen abonnementstype.MaxRolloverGB bestemmer maksimal rollover mengde. Det er ikke mulig å overføre større datamengde enn det abonnementstypen tillater i denne kolonnen. (Verdien NULL betyr at abonnementstypen ikke tillater noe rollover.)
+
+Skriv en lagret funksjon NyDatamengdeBytes som beregner og returnerer hvor mye gjenstående datamengde et abonnement skal få ved månedsskifte:
+
+TlfNr skal være eneste parameter til funksjonen.
+Gjenstående datamengde er ny månedskvote fra abonnementstypen + rollover.
+Legg merke til at funksjonen skal returnere verdien målt i Bytes (B), mens verdiene i kolonnene InkludertDataGB og MaxRolloverGB er målt i GB (Gigabyte). Du kan regne med at 1 GB = 109 B.
+Utfordring: Hva bør funksjonen returnere hvis abonnementet har ubegrenset datamengde uten noen månedskvote?
+Test: Skriv en SQL-kommando som kan kjøres den 1. i hver måned og som oppdaterer datamengden for alle abonnementer. Kommandoen skal bruke funksjonen NyDatamengdeBytes for å begregne ny datamengde for hvert abonnement.
+
+Tips: Du behøver bare å skrive SQL-kommandoen som gjør oppdateringen. (Start gjerne med en kommando som bare oppdaterer ett abonnement. Da er det lettere å sjekke om resultatet er korrekt.) Du behøver ikke å lage logikk som kjører kommandoen automatisk hvert månedsskifte. Til det kunne man ha brukt et EVENT, men det er ikke pensum, og du behøver altså ikke lage det. (Du har heller ikke rettigheter til å kjøre EVENTs på itfag.usn.no)
+
+D. Lagret prosedyre
+En mobilkunde kan kjøpe ekstra datamengde til abonnementer ved å kjøpe ekstra datapakker. Det finnes flere typer datapakker, med ulik datamengde. Opplysninger om disse finnes i tabellen pakketype. Hver gang en kunde kjøper en ny datapakke, skal det settes inn en ny rad i tabellen datakjøp.
+
+Kolonnene i den nye raden skal fylles ut slik:
+
+DatoKjøpt skal settes til dagens dato.
+DatoUtløper skal settes til dagens dato + antall dager som den kjøpte pakketypen varer.
+Pris skal settes til pakketypens pris. (Prisen skal lagres i datakjøp slik at fremtidige prisendringer i pakketype ikke skal påvirke allerede kjøpte pakker).
+DataKjøptGB skal settes til pakketypens datamengde i GB (DataMengdeGB).
+Datamengden i den nye pakken også legges til abonnementets gjenstående datamengde. Hvis abonnementet har redusert hastighet, skal dette oppheves når kunden kjøper datapakken.
+
+Skriv en lagret prosedyre nyPakke som kan kalles for å sette inn en ny rad i tabellen datakjøp på korrekt måte for et gitt telefonnumer, og en pakketype. Du må selv bestemme parametere til prosedyren og hvordan logikken i prosedyren skal være.
+
+Prosedyren skal ha transaksjonshåndtering og så god feilbehandling som mulig. Den skal f.eks. sikre at parameterverdier er gyldige og at det ikke oppstår databasefeil ved kjøring av prosedyren. Se regler for gyldige verdier under beskrivelse av databasen. Prosedyren skal også returnere informasjon til klienten om innsettingen ble gjennomført eller ikke, og årsaken til eventuelle feilsituasjoner.
+
+Test: Skriv SQL-kommandoer som tester prosedyren og viser resultatet.
+
+E. Utfordring: Klientprogram (frivillig)
+Skriv et Java-program med UI, eller en liten webapplikasjon, som en mobilkunde kan bruke for å kjøpe en ekstra datapakke. Programmet skal kalle den lagrede prosedyren fra oppgave C.
+
+Denne oppgaven er frivillig og kreves ikke for å bestå arbeidskravet.
+
+Oppgave 2 Databaseadministrasjon.
+A. Sikkerhetskopi
+Skriv operativsystemkommandoer i kommandovinduet (CMD eller Terminal) som gjør følgende:
+
+Tar logisk sikkerhetskopi (backup) av hele PlingMe-databasen.
+Sletter alle data i tabellen databruk.
+Gjenoppretter innholdet i tabellen databruk fra den logiske sikkerhetskopien.
+B. Fysisk lagring
+Tabellen databruk må kunne lagre data for 5 år tilbake i tid. Mobilselskapet regner med å få ca. 400.000 kunder og ca. 600.000 abonnementer.
+
+Beregn ca. hvor mye fysisk diskplass tabellen databruk vil kreve etter at systemet har vært i drift i 5 år.
