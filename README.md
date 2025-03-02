@@ -1,4 +1,4 @@
-Inneholder løsninger fra emnet Database 1 og Database 2.
+Inneholder løsninger fra emnene Database 1 og Database 2.
 
 # Database 1 – Læringsutbytte
 Jeg har opparbeidet kunnskap om relasjonsdatabaser, SQL og datamodellering. 
