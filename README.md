@@ -1,3 +1,5 @@
+Inneholder løsninger fra emnet Database 1 og Database 2.
+
 # Database 1 – Læringsutbytte
 Jeg har opparbeidet kunnskap om relasjonsdatabaser, SQL og datamodellering. 
 Jeg kan lage, oppdatere og hente data med SQL, samt normalisere og implementere datamodeller. 
